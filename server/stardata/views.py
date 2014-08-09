@@ -5,6 +5,6 @@ from stardata.models import *
 
 
 def stars(request):
-    stars = Star.objects.order_by('distance')[:10]
+    stars = Star.objects.order_by('distance')[:100]
     data = serializers.serialize("json", stars)
     return HttpResponse(data, content_type="application/json")
