@@ -6,10 +6,8 @@ angular.module('starmap').controller('RootCtrl',
             .then(function(s) {
                 $scope.stars = s;
                 init();
-                // initialiseLights();
+                initialiseLights();
                 initialiseStars();
-                controls.addEventListener('change', render);
-                animate();
                 render();
 
                 // attachScrollEvents();
@@ -21,9 +19,7 @@ angular.module('starmap').controller('RootCtrl',
 
             renderer = new THREE.WebGLRenderer();
             renderer.setSize( window.innerWidth, window.innerHeight );
-            document.body.appendChild( renderer.domElement );
-
-
+            var container = document.body.appendChild( renderer.domElement );
 
             controls = new THREE.OrbitControls( camera );
             controls.damping = 0.2;
@@ -31,10 +27,72 @@ angular.module('starmap').controller('RootCtrl',
 
             camera.position.z = cameraRadius;
 
+            stats = new Stats();
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.top = '0px';
+            stats.domElement.style.zIndex = 100;
+            container.appendChild( stats.domElement );
 
+
+            animate();
         };
 
+        function initialiseStars() {
+            // var geometry = new THREE.PlaneGeometry (10, 10);
+            // var material = new THREE.MeshNormalMaterial( {color: 0x333333, side: THREE.DoubleSide, opacity: 0.3, transparent: true} );
+            // var plane = new THREE.Mesh( geometry, material );
+            // plane.position.x = 0;
+            // plane.position.y = 0;
+            // plane.position.z = 0;
+            // scene.add( plane );
+
+            var geometry = new THREE.RingGeometry(5, 5.01, 32, 32);
+            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
+            var outerSphere = new THREE.Mesh( geometry, material );
+            scene.add(outerSphere);
+
+            var geometry = new THREE.RingGeometry(4, 4.01, 32, 32);
+            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
+            var outerSphere = new THREE.Mesh( geometry, material );
+            scene.add(outerSphere);
+
+            var geometry = new THREE.RingGeometry(3, 3.01, 32, 32);
+            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
+            var outerSphere = new THREE.Mesh( geometry, material );
+            scene.add(outerSphere);
+
+            var geometry = new THREE.RingGeometry(2, 2.01, 32, 32);
+            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
+            var outerSphere = new THREE.Mesh( geometry, material );
+            scene.add(outerSphere);
+
+            var geometry = new THREE.RingGeometry(1, 1.01, 32, 32);
+            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
+            var outerSphere = new THREE.Mesh( geometry, material );
+            scene.add(outerSphere);
+
+            _.each($scope.stars, function(star) {
+                // console.log('adding ', star.fields);
+                var geometry = new THREE.SphereGeometry(star.fields.absmag/700, 3, 3);
+                var material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+                var starMesh = new THREE.Mesh( geometry, material );
+                // var starMesh = new THREE.Sprite();
+                // starMesh.scale = star.fields.absmag/700;
+                starMesh.position.x = star.fields.x;
+                starMesh.position.y = star.fields.y;
+                starMesh.position.z = star.fields.z;
+                starMesh.id = star.fields.starid;
+                scene.add( starMesh );
+            });
+        }
+
+
+
+
         function initialiseLights() {
+            var light = new THREE.AmbientLight( 0x404040 ); // soft white light
+            scene.add( light );
+
              // create a point light
             var pointLight = new THREE.PointLight(0xFFFFFF);
             // set its position
@@ -53,20 +111,6 @@ angular.module('starmap').controller('RootCtrl',
             // add to the scene
             scene.add(pointLight2);
         };
-
-        function initialiseStars() {
-            _.each($scope.stars, function(star) {
-                // console.log('adding ', star.fields);
-                var geometry = new THREE.SphereGeometry(star.fields.absmag/700);
-                var material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
-                var starMesh = new THREE.Mesh( geometry, material );
-                starMesh.position.x = star.fields.x;
-                starMesh.position.y = star.fields.y;
-                starMesh.position.z = star.fields.z;
-                starMesh.id = star.fields.starid;
-                scene.add( starMesh );
-            });
-        }
 
         // function initialiseStars() {
         //     var geometry = new THREE.Geometry();
@@ -88,15 +132,6 @@ angular.module('starmap').controller('RootCtrl',
         var origin = new THREE.Vector3(0,0,0);
         // var lut = new THREE.Lut( "cooltowarm", 1000 );
 
-        function zoom(direction, amount) {
-            if  (direction === 'UP') {
-                camera.position.z -= amount;
-            }
-            else {
-                camera.position.z += amount;
-            }
-        };
-
 
         function rotateCamera(frame) {
             // console.log('camera moving from ', camera.position.x, camera.position.y);
@@ -113,6 +148,7 @@ angular.module('starmap').controller('RootCtrl',
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
+            stats.update();
         }
 
 
@@ -122,36 +158,7 @@ angular.module('starmap').controller('RootCtrl',
             // rotateCamera(frame);
             // camera.rotation.x += 0.1;
             renderer.render(scene, camera);
-            // stat.update();
         }
-
-
-
-
-
-        // function MouseWheelHandler(e) {
-
-        //     // cross-browser wheel delta
-        //     var e = window.event || e; // old IE support
-        //     var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
-
-        //     direction = delta === -1 ? 'DOWN' : 'UP';
-        //     zoom(direction, 0.3);
-
-        //     e.preventDefault();
-        //     return false;
-        // }
-
-        // function attachScrollEvents() {
-        //     var canvas = document.getElementsByTagName("canvas")[0];
-        //     if (canvas.addEventListener) {
-        //         // IE9, Chrome, Safari, Opera
-        //         canvas.addEventListener("mousewheel", MouseWheelHandler, false);
-        //         // Firefox
-        //         canvas.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
-        //     }
-
-        // }
 
 
     });
