@@ -7,6 +7,6 @@ urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'starmap.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),
-
+    url(r'^stars/', include('stardata.urls')),
     url(r'^admin/', include(admin.site.urls)),
 )
