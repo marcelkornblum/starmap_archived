@@ -1,31 +1,18 @@
 angular.module('starmap').controller('RootCtrl',
     function($scope, $document, stars){
-        var scene, camera, renderer, controls;
-
-        stars.get()
-            .then(function(s) {
-                $scope.stars = s;
-                init();
-                initialiseLights();
-                initialiseStars();
-                render();
-
-                // attachScrollEvents();
-            });
+        var scene, camera, renderer, controls, container;
 
         function init() {
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
             renderer = new THREE.WebGLRenderer();
             renderer.setSize( window.innerWidth, window.innerHeight );
-            var container = document.body.appendChild( renderer.domElement );
+            container = document.body.appendChild( renderer.domElement );
 
-            controls = new THREE.OrbitControls( camera );
-            controls.damping = 0.2;
-            controls.addEventListener( 'change', render );
-
-            camera.position.z = cameraRadius;
+            initialiseCamera(35, 0.1, 1000);
+            initialiseControls();
+            initialiseGrid(origin);
+            initialiseLights();
 
             stats = new Stats();
             stats.domElement.style.position = 'absolute';
@@ -33,61 +20,23 @@ angular.module('starmap').controller('RootCtrl',
             stats.domElement.style.zIndex = 100;
             container.appendChild( stats.domElement );
 
-
             animate();
         };
 
-        function initialiseStars() {
-            // var geometry = new THREE.PlaneGeometry (10, 10);
-            // var material = new THREE.MeshNormalMaterial( {color: 0x333333, side: THREE.DoubleSide, opacity: 0.3, transparent: true} );
-            // var plane = new THREE.Mesh( geometry, material );
-            // plane.position.x = 0;
-            // plane.position.y = 0;
-            // plane.position.z = 0;
-            // scene.add( plane );
+        function initialiseCamera(fov, inner, outer) {
+            camera = new THREE.PerspectiveCamera( fov, window.innerWidth / window.innerHeight, inner, outer );
 
-            var geometry = new THREE.RingGeometry(5, 5.01, 32, 32);
-            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
-            var outerSphere = new THREE.Mesh( geometry, material );
-            scene.add(outerSphere);
-
-            var geometry = new THREE.RingGeometry(4, 4.01, 32, 32);
-            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
-            var outerSphere = new THREE.Mesh( geometry, material );
-            scene.add(outerSphere);
-
-            var geometry = new THREE.RingGeometry(3, 3.01, 32, 32);
-            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
-            var outerSphere = new THREE.Mesh( geometry, material );
-            scene.add(outerSphere);
-
-            var geometry = new THREE.RingGeometry(2, 2.01, 32, 32);
-            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
-            var outerSphere = new THREE.Mesh( geometry, material );
-            scene.add(outerSphere);
-
-            var geometry = new THREE.RingGeometry(1, 1.01, 32, 32);
-            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
-            var outerSphere = new THREE.Mesh( geometry, material );
-            scene.add(outerSphere);
-
-            _.each($scope.stars, function(star) {
-                // console.log('adding ', star.fields);
-                var geometry = new THREE.SphereGeometry(star.fields.absmag/700, 3, 3);
-                var material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
-                var starMesh = new THREE.Mesh( geometry, material );
-                // var starMesh = new THREE.Sprite();
-                // starMesh.scale = star.fields.absmag/700;
-                starMesh.position.x = star.fields.x;
-                starMesh.position.y = star.fields.y;
-                starMesh.position.z = star.fields.z;
-                starMesh.id = star.fields.starid;
-                scene.add( starMesh );
-            });
+            camera.position.z = camera.position.y = cameraRadius;
+            camera.up = new THREE.Vector3(0, 0, 1);
+            console.log(camera.rotation.set(0.5, 0.5, 0.5));
+            console.log(camera.rotation);
         }
 
-
-
+        function initialiseControls() {
+            controls = new THREE.OrbitControls( camera );
+            controls.damping = 0.2;
+            controls.addEventListener( 'change', render );
+        }
 
         function initialiseLights() {
             var light = new THREE.AmbientLight( 0x404040 ); // soft white light
@@ -112,6 +61,80 @@ angular.module('starmap').controller('RootCtrl',
             scene.add(pointLight2);
         };
 
+        function initialiseGrid(target) {
+            // var geometry = new THREE.PlaneGeometry (10, 10);
+            // var material = new THREE.MeshNormalMaterial( {color: 0x333333, side: THREE.DoubleSide, opacity: 0.3, transparent: true} );
+            // var plane = new THREE.Mesh( geometry, material );
+            // plane.position.x = 0;
+            // plane.position.y = 0;
+            // plane.position.z = 0;
+            // scene.add( plane );
+
+            var geometry = new THREE.RingGeometry(5, 5.01, 32, 32);
+            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
+            var innerCircle = new THREE.Mesh( geometry, material );
+            innerCircle.target = target;
+            scene.add(innerCircle);
+
+            var geometry = new THREE.RingGeometry(4, 4.01, 32, 32);
+            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
+            var secondCircle = new THREE.Mesh( geometry, material );
+            secondCircle.target = target;
+            scene.add(secondCircle);
+
+            var geometry = new THREE.RingGeometry(3, 3.01, 32, 32);
+            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
+            var thirdCircle = new THREE.Mesh( geometry, material );
+            thirdCircle.target = target;
+            scene.add(thirdCircle);
+
+            var geometry = new THREE.RingGeometry(2, 2.01, 32, 32);
+            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
+            var fourthCircle = new THREE.Mesh( geometry, material );
+            fourthCircle.target = target;
+            scene.add(fourthCircle);
+
+            var geometry = new THREE.RingGeometry(1, 1.01, 32, 32);
+            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
+            var outerCircle = new THREE.Mesh( geometry, material );
+            outerCircle.target = target;
+            scene.add(outerCircle);
+        }
+
+        function initialiseStars() {
+            _.each($scope.stars, function(star) {
+                // console.log('adding ', star.fields);
+                var geometry = new THREE.SphereGeometry(star.fields.absmag/1000, 3, 3);
+                var material = new THREE.MeshBasicMaterial( { color: colorIndexToHex(star.fields.colorindex) } );
+                var starMesh = new THREE.Mesh( geometry, material );
+                // var starMesh = new THREE.Sprite();
+                // starMesh.scale = star.fields.absmag/700;
+                starMesh.position.x = star.fields.x;
+                starMesh.position.y = star.fields.y;
+                starMesh.position.z = star.fields.z;
+                starMesh.id = star.fields.starid;
+                scene.add( starMesh );
+            });
+        }
+
+        function colorIndexToHex(index) {
+            var cS = ['0xadd8e6', '0xb7dde8', '0xc1e1e8', '0xcbe4e6', '0xd4e7e2', '0xdceadd', '0xe3ebd6', '0xeaeccd', '0xf0ecc4', '0xf6ebb9', '0xfae9ad', '0xffe6a1', '0xffe294', '0xffdd86', '0xffd778', '0xffcf6a', '0xffc65b', '0xffbc4c', '0xffaf3e', '0xffa130', '0xff9121', '0xff7d13', '0xff6605', '0xff4700', '0xff0000'];
+            // from https://vis4.net/labs/multihue/0xcolors=lightblue, white, yellow, red|steps=25|bez=1|coL=0
+            // index === 0 is -0.5, index = 5 is 0.0, index = 24 = 1.9
+            if (!angular.isDefined(index) || index === null || index === '') {
+                return 0xffffff;
+            }
+            var bmv = parseFloat(index);
+            var idx = Math.round((bmv + 0.5) * 10);
+            if (idx < 0) {
+                idx = 0;
+            }
+            if (idx >= cS.length) {
+                idx = cS.length - 1;
+            }
+            return parseInt(cS[idx] , 16);
+        }
+
         // function initialiseStars() {
         //     var geometry = new THREE.Geometry();
         //     _.each($scope.stars, function(star) {
@@ -127,9 +150,6 @@ angular.module('starmap').controller('RootCtrl',
         //     // starMesh.id = star.fields.starid;
         //     scene.add( starPoints );
         // }
-
-        var cameraRadius = 10;
-        var origin = new THREE.Vector3(0,0,0);
         // var lut = new THREE.Lut( "cooltowarm", 1000 );
 
 
@@ -145,12 +165,13 @@ angular.module('starmap').controller('RootCtrl',
 
 
 
+
+
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
             stats.update();
         }
-
 
         function render() {
             // var frame = requestAnimationFrame(render);
@@ -159,6 +180,22 @@ angular.module('starmap').controller('RootCtrl',
             // camera.rotation.x += 0.1;
             renderer.render(scene, camera);
         }
+
+
+
+
+
+        var cameraRadius = 8;
+        var origin = new THREE.Vector3(5,0,0);
+
+        init();
+
+        stars.get()
+            .then(function(s) {
+                $scope.stars = s;
+                initialiseStars();
+                render();
+            });
 
 
     });
