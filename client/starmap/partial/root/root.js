@@ -1,13 +1,15 @@
 angular.module('starmap').controller('RootCtrl',
     function($scope, $document, stars){
-        var scene, camera, renderer, controls, container;
+        var scene, camera, projector, renderer, controls, container, starObjects;
 
         function init() {
             scene = new THREE.Scene();
 
-            renderer = new THREE.WebGLRenderer();
+            container = document.getElementById('threeCanvas');
+            // console.log(container);
+            renderer = new THREE.WebGLRenderer({ canvas: container });
             renderer.setSize( window.innerWidth, window.innerHeight );
-            container = document.body.appendChild( renderer.domElement );
+            // container = document.body.appendChild( renderer.domElement );
 
             initialiseCamera(35, 0.1, 1000);
             initialiseControls();
@@ -20,6 +22,10 @@ angular.module('starmap').controller('RootCtrl',
             stats.domElement.style.zIndex = 100;
             container.appendChild( stats.domElement );
 
+            projector = new THREE.Projector();
+
+            window.addEventListener( 'resize', onWindowResize, false );
+
             animate();
         };
 
@@ -28,12 +34,12 @@ angular.module('starmap').controller('RootCtrl',
 
             camera.position.z = camera.position.y = cameraRadius;
             camera.up = new THREE.Vector3(0, 0, 1);
-            console.log(camera.rotation.set(0.5, 0.5, 0.5));
-            console.log(camera.rotation);
+            // console.log(camera.rotation.set(0.5, 0.5, 0.5));
+            // console.log(camera.rotation);
         }
 
         function initialiseControls() {
-            controls = new THREE.OrbitControls( camera );
+            controls = new THREE.OrbitControls( camera, container );
             controls.damping = 0.2;
             controls.addEventListener( 'change', render );
         }
@@ -102,18 +108,27 @@ angular.module('starmap').controller('RootCtrl',
         }
 
         function initialiseStars() {
-            _.each($scope.stars, function(star) {
+            starObjects = [];
+            _.each($scope.stars, function(star, key) {
                 // console.log('adding ', star.fields);
-                var geometry = new THREE.SphereGeometry(star.fields.absmag/1000, 3, 3);
+                var geometry = new THREE.SphereGeometry(star.fields.absmag/1000);
                 var material = new THREE.MeshBasicMaterial( { color: colorIndexToHex(star.fields.colorindex) } );
-                var starMesh = new THREE.Mesh( geometry, material );
+                var starVisual = new THREE.Mesh( geometry, material );
+
+                var geometry = new THREE.SphereGeometry(0.1, 3, 3);
+                var material = new THREE.MeshBasicMaterial( { transparent: true, opacity: 0 } );
+                var starClick = new THREE.Mesh( geometry, material );
+                starClick.add(starVisual);
+
                 // var starMesh = new THREE.Sprite();
                 // starMesh.scale = star.fields.absmag/700;
-                starMesh.position.x = star.fields.x;
-                starMesh.position.y = star.fields.y;
-                starMesh.position.z = star.fields.z;
-                starMesh.id = star.fields.starid;
-                scene.add( starMesh );
+                starClick.position.x = star.fields.x;
+                starClick.position.y = star.fields.y;
+                starClick.position.z = star.fields.z;
+                starClick.id = star.fields.starid;
+                starClick.name = key;
+                scene.add( starClick );
+                starObjects.push(starClick);
             });
         }
 
@@ -163,6 +178,50 @@ angular.module('starmap').controller('RootCtrl',
             camera.lookAt(origin);
         };
 
+        function onWindowResize() {
+
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize( window.innerWidth, window.innerHeight );
+
+        }
+
+
+        $scope.onClicked = function ( event ) {
+            console.log('clicked');
+            event.preventDefault();
+
+            var vector = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1, 0.5 );
+            projector.unprojectVector( vector, camera );
+
+            var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+            var intersects = raycaster.intersectObjects( starObjects );
+
+            if ( intersects.length > 0 ) {
+
+                // intersects[ 0 ].object.material.color.setHex( Math.random() * 0xffffff );
+                console.log('caught an intersection', intersects[0].object.name,$scope.stars[intersects[0].object.name]);
+                $scope.selectedStar = $scope.stars[intersects[0].object.name];
+
+                // var particle = new THREE.Sprite( particleMaterial );
+                // particle.position.copy( intersects[ 0 ].point );
+                // particle.scale.x = particle.scale.y = 16;
+                // scene.add( particle );
+
+            }
+
+            /*
+            // Parse all the faces
+            for ( var i in intersects ) {
+
+                intersects[ i ].face.material[ 0 ].color.setHex( Math.random() * 0xffffff | 0x80000000 );
+
+            }
+            */
+        }
+
 
 
 
@@ -195,6 +254,7 @@ angular.module('starmap').controller('RootCtrl',
                 $scope.stars = s;
                 initialiseStars();
                 render();
+                $scope.selectedStar = $scope.stars[0];
             });
 
 
