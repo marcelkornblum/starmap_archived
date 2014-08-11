@@ -18,9 +18,11 @@ angular.module('starmap').controller('RootCtrl',
 
             stats = new Stats();
             stats.domElement.style.position = 'absolute';
-            stats.domElement.style.top = '0px';
-            stats.domElement.style.zIndex = 100;
-            container.appendChild( stats.domElement );
+            stats.domElement.style.top = '10px';
+            stats.domElement.style.left = '10px';
+            stats.domElement.style.zIndex = 1000;
+            stats.domElement.style.border = '1px solid blue';
+            container.parentNode.appendChild( stats.domElement );
 
             projector = new THREE.Projector();
 
@@ -33,7 +35,7 @@ angular.module('starmap').controller('RootCtrl',
             camera = new THREE.PerspectiveCamera( fov, window.innerWidth / window.innerHeight, inner, outer );
 
             camera.position.z = camera.position.y = cameraRadius;
-            camera.up = new THREE.Vector3(0, 0, 1);
+            camera.up = new THREE.Vector3(0, 1, 0);
             // console.log(camera.rotation.set(0.5, 0.5, 0.5));
             // console.log(camera.rotation);
         }
@@ -47,64 +49,44 @@ angular.module('starmap').controller('RootCtrl',
         function initialiseLights() {
             var light = new THREE.AmbientLight( 0x404040 ); // soft white light
             scene.add( light );
-
-             // create a point light
-            var pointLight = new THREE.PointLight(0xFFFFFF);
-            // set its position
-            pointLight.position.x = 10;
-            pointLight.position.y = 50;
-            pointLight.position.z = 130;
-            // add to the scene
-            scene.add(pointLight);
-
-            // create a point light
-            var pointLight2 = new THREE.PointLight(0xFFFFFF);
-            // set its position
-            pointLight2.position.x = -10;
-            pointLight2.position.y = -50;
-            pointLight2.position.z = -130;
-            // add to the scene
-            scene.add(pointLight2);
         };
 
         function initialiseGrid(target) {
-            // var geometry = new THREE.PlaneGeometry (10, 10);
-            // var material = new THREE.MeshNormalMaterial( {color: 0x333333, side: THREE.DoubleSide, opacity: 0.3, transparent: true} );
-            // var plane = new THREE.Mesh( geometry, material );
-            // plane.position.x = 0;
-            // plane.position.y = 0;
-            // plane.position.z = 0;
-            // scene.add( plane );
+            var geometry = new THREE.Geometry();
+            var material = new THREE.Material({ visible: false });
+            var coords = new THREE.Mesh( geometry, material );
 
-            var geometry = new THREE.RingGeometry(5, 5.01, 32, 32);
-            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
-            var innerCircle = new THREE.Mesh( geometry, material );
-            innerCircle.target = target;
-            scene.add(innerCircle);
+            coords.position.set(target.x, target.y, target.z);
+            coords = equatorialToGalacticCoordinates(coords);
+            scene.add(coords);
 
-            var geometry = new THREE.RingGeometry(4, 4.01, 32, 32);
-            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
-            var secondCircle = new THREE.Mesh( geometry, material );
-            secondCircle.target = target;
-            scene.add(secondCircle);
 
-            var geometry = new THREE.RingGeometry(3, 3.01, 32, 32);
-            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
-            var thirdCircle = new THREE.Mesh( geometry, material );
-            thirdCircle.target = target;
-            scene.add(thirdCircle);
+            var material = new THREE.LineBasicMaterial({color: 0x000099});
+            var geometry = new THREE.Geometry();
+            geometry.vertices.push(
+                new THREE.Vector3( 0, 0, 0 ),
+                new THREE.Vector3( 0, 0, 5 )
+            );
+            var galacticNorthLine = new THREE.Line( geometry, material );
+            coords.add( galacticNorthLine );
 
-            var geometry = new THREE.RingGeometry(2, 2.01, 32, 32);
-            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
-            var fourthCircle = new THREE.Mesh( geometry, material );
-            fourthCircle.target = target;
-            scene.add(fourthCircle);
+            var material = new THREE.LineBasicMaterial({color: 0x003300});
+            var geometry = new THREE.Geometry();
+            geometry.vertices.push(
+                new THREE.Vector3( 0, 0, 0 ),
+                new THREE.Vector3( 5, 0, 0 )
+            );
+            var galacticCenterLine = new THREE.Line( geometry, material );
+            coords.add( galacticCenterLine );
 
-            var geometry = new THREE.RingGeometry(1, 1.01, 32, 32);
-            var material = new THREE.MeshBasicMaterial( {color: 0x333333, side: THREE.DoubleSide} );
-            var outerCircle = new THREE.Mesh( geometry, material );
-            outerCircle.target = target;
-            scene.add(outerCircle);
+
+            var material = new THREE.LineBasicMaterial({ color: 0x333333 });
+            for (var i = 1; i <= 5; i++) {
+                var circleGeometry = new THREE.CircleGeometry( i, 64 );
+                circleGeometry.vertices.shift();
+                var circle = new THREE.Line( circleGeometry, material );
+                coords.add( circle );
+            }
         }
 
         function initialiseStars() {
@@ -148,6 +130,30 @@ angular.module('starmap').controller('RootCtrl',
                 idx = cS.length - 1;
             }
             return parseInt(cS[idx] , 16);
+        }
+
+        function equatorialToGalacticCoordinates(object) {
+            // (in equatorial coordinates (2000)
+            // Galactic North is at RA = 12h51m26.282s, Dec = +27°07'42"01 (192.859508, 27.128336 in decimal degrees; 3.36603341, 0.473478784 in radians)
+            // Galactic Centre at RA = 17h45m37.224s, Dec = -28°56'10"23  (266.405100, -28.936175 in decimal degrees; 4.64964614, -0.505031527 in radians)
+
+            // the HYG data set has Z as the equatorial north pole, X as vernal equinox and Y as 6 hours RA, 0 Dec
+
+            var xRotation = (Math.PI / 2) - 0.473478784;
+            var yRotation = 0; // surely this is the way to get Gal Center aligned?
+            var zRotation = (2 * Math.PI) - 3.36603341;
+
+            object.rotation.set(xRotation, yRotation, zRotation);
+            return object;
+        }
+
+        function galacticToEquatorialCoordinates(object) {
+            var xRotation = 0.473478784;
+            var yRotation = 0; // surely this is the way to get Gal Center aligned?
+            var zRotation = 3.36603341;
+
+            object.rotation.set(xRotation, yRotation, zRotation);
+            return object;
         }
 
         // function initialiseStars() {
@@ -245,7 +251,7 @@ angular.module('starmap').controller('RootCtrl',
 
 
         var cameraRadius = 8;
-        var origin = new THREE.Vector3(5,0,0);
+        var origin = new THREE.Vector3(0,0,0);
 
         init();
 
