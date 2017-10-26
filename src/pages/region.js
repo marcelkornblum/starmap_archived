@@ -9,7 +9,7 @@ import { rotate_to_galactic, rotate_to_equatorial } from '../utils/astronomy';
 
 let OrbitControls = require('../utils/threeOrbitControls.js')(THREE);
 
-class Simple extends React.Component {
+class RegionMap extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -74,7 +74,7 @@ class Simple extends React.Component {
   }
 }
 
-export default Simple;
+export default RegionMap;
 
 export const query = graphql`
   query RegionQuery {

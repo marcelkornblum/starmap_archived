@@ -10,6 +10,10 @@ const IndexPage = () => (
     <p>
       <Link to="/region/">Or check out the map</Link>
     </p>
+
+    <button id="increment">INCREMENT</button>
+    <button id="decrement">DECREMENT</button>
+    <div id="content" />
   </div>
 );
 
