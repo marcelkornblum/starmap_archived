@@ -19,13 +19,16 @@ class StarMap extends React.Component {
   }
 
   componentDidMount() {
+    console.log('hi', ReactDOM.findDOMNode(this.refs.react3), this.refs.camera);
     this.controls = new THREE.OrbitControls(
       this.refs.camera,
       ReactDOM.findDOMNode(this.refs.react3)
     );
   }
 
-  _renderStar = (starData, idx) => <StarOnMap key={idx} data={starData} />;
+  _renderStar = (starData, idx) => (
+    <StarOnMap key={idx} data={starData} display={this.props.starDisplay} />
+  );
 
   _renderStars = () => this.props.stars.map(this._renderStar);
 

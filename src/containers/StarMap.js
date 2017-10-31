@@ -8,6 +8,7 @@ import {
   selectCameraPosition,
   selectOrigin,
   selectCoordinateSystem,
+  selectStarDisplay,
 } from '../store/regionMap/selectors';
 import { setStarData } from '../store/stars/actions';
 import { selectRegionStars } from '../store/stars/selectors';
@@ -18,6 +19,7 @@ const mapStateToProps = (state, ownProps) => {
     coordinateSystem: selectCoordinateSystem(state),
     cameraPostion: selectCameraPosition(state),
     origin: selectOrigin(state),
+    starDisplay: selectStarDisplay(state),
     gatsbyStars: ownProps.stars, // workaround for gatsby magic graphQL
     stars: selectRegionStars(state),
   };
