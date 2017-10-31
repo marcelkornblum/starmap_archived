@@ -1,17 +1,10 @@
-import { createStore, applyMiddleware, compose } from 'redux';
-import { persistStore, autoRehydrate } from 'redux-persist';
-// import thunkMiddleware from 'redux-thunk';
+import { createStore as reduxCreateStore, applyMiddleware, compose } from 'redux';
 import AppReducer from './reducers';
-// import { callAPIMiddleware } from '../middleware/api';
-// import analyticsMiddleware from '../middleware/analytics';
 import { GA_TRACKING_ID } from '../consts';
 
 const initialState = {};
 const enhancers = [];
 const middleware = applyMiddleware();
-//   callAPIMiddleware,
-//   thunkMiddleware,
-//   analyticsMiddleware({ trackingId: GA_TRACKING_ID })
 
 // add middleware for Chrome devToolsExtension
 if (process.env.NODE_ENV === 'development') {
@@ -20,9 +13,6 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const composed = compose(middleware, ...enhancers);
-const store = createStore(AppReducer, initialState, composed);
+const createStore = () => reduxCreateStore(AppReducer, initialState, composed);
 
-export default function initStore() {
-  return new Promise(fulfill => persistStore(store, {}, () => fulfill(store)));
-  // persistStore(store).purge(); // use this to reset
-}
+export default createStore;

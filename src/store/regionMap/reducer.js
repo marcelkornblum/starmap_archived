@@ -1,24 +1,35 @@
+import { handleActions } from 'redux-actions';
 import * as THREE from 'three';
 
-import * as actions from './actions';
+import { rotate_to_galactic, rotate_to_equatorial } from '../../utils/astronomy';
+import { MAP_COORDS_GALACTIC, MAP_COORDS_EQUATORIAL } from '../../consts';
+
+import * as regionMap from './actions';
 
 export const initialState = {
   gridRotation: new THREE.Euler(),
-  counter: 0,
+  coordinateSystem: MAP_COORDS_EQUATORIAL, // the source data is in this form
+  origin: new THREE.Vector3(0, 0, 0),
+  cameraPosition: new THREE.Vector3(50, 20, 0),
 };
 
-const regionMapReducer = (state = initialState, action) => {
-  const { type, payload } = action;
-
-  switch (type) {
-    // case actions.SET_MESSAGING_TOKEN:
-    // case actions.UNSET_MESSAGING_TOKEN:
-    //   return { ...state, token: payload };
-    // case actions.SET_MESSAGING_TOKEN_SAVED:
-    //   return { ...state, tokenSaved: payload };
-    default:
-      return state;
-  }
-};
-
-export default regionMapReducer;
+export default handleActions(
+  {
+    [regionMap.toggleGridRotation]: (state, action) => {
+      if (state.coordinateSystem === MAP_COORDS_EQUATORIAL) {
+        return {
+          ...state,
+          gridRotation: rotate_to_galactic(),
+          coordinateSystem: MAP_COORDS_GALACTIC,
+        };
+      } else {
+        return {
+          ...state,
+          gridRotation: rotate_to_equatorial(),
+          coordinateSystem: MAP_COORDS_EQUATORIAL,
+        };
+      }
+    },
+  },
+  initialState
+);
