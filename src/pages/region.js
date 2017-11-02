@@ -1,8 +1,14 @@
 import React from 'react';
 
+import MapControls from '../containers/MapControls';
 import StarMap from '../containers/StarMap';
 
-const Region = props => <StarMap stars={props.data.allStarsCsv.edges} />;
+const Region = props => (
+  <div>
+    <StarMap stars={props.data.allStarsCsv.edges} />
+    <MapControls />
+  </div>
+);
 
 export const query = graphql`
   query RegionQuery {

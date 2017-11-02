@@ -1,6 +1,6 @@
 module.exports = {
   siteMetadata: {
-    title: `Gatsby Starmap`,
+    title: `Starmap`,
   },
   plugins: [
     {

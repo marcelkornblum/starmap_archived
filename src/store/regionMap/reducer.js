@@ -6,16 +6,19 @@ import { MAP_COORDS_GALACTIC, MAP_COORDS_EQUATORIAL, STAR_SHAPE_SPHERE } from '.
 
 import * as regionMap from './actions';
 
+export const defaultStarDisplay = {
+  color: 0xffffff,
+  size: 0.1,
+  shape: STAR_SHAPE_SPHERE,
+};
+
 export const initialState = {
   gridRotation: new THREE.Euler(),
   coordinateSystem: MAP_COORDS_EQUATORIAL, // the source data is in this form
   origin: new THREE.Vector3(0, 0, 0),
   cameraPosition: new THREE.Vector3(50, 20, 0),
-  starDisplay: {
-    color: 0xffffff,
-    size: 0.1,
-    shape: STAR_SHAPE_SPHERE,
-  },
+  starDisplay: defaultStarDisplay,
+  renderCounter: 0,
 };
 
 export default handleActions(
@@ -35,6 +38,24 @@ export default handleActions(
         };
       }
     },
+    [regionMap.toggleStarColor]: (state, action) => {
+      console.log(state.starDisplay !== defaultStarDisplay, state.starDisplay, defaultStarDisplay);
+      if (state.starDisplay !== defaultStarDisplay) {
+        return {
+          ...state,
+          starDisplay: defaultStarDisplay,
+        };
+      } else {
+        return {
+          ...state,
+          starDisplay: null,
+        };
+      }
+    },
+    [regionMap.triggerReRender]: (state, action) => ({
+      ...state,
+      renderCounter: state.renderCounter + 1,
+    }),
   },
   initialState
 );

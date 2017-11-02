@@ -8,10 +8,12 @@ export const initialState = {
 
 export default handleActions(
   {
-    [stars.setStarData]: (state, action) => ({
-      ...state,
-      stars: action.payload.map(i => i.node),
-    }),
+    [stars.setStarData]: (state, action) => {
+      return {
+        ...state,
+        stars: action.payload,
+      };
+    },
   },
   initialState
 );
